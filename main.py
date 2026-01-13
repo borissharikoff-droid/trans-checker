@@ -52,6 +52,7 @@ def print_banner():
     print(f"  BEP20: {config.BEP20_WALLET}")
     print(f"\nМинимальная сумма для уведомления: {config.MIN_AMOUNT} USDT")
     print(f"Интервал проверки: {config.CHECK_INTERVAL} сек")
+    print(f"BscScan API Key: {'установлен' if config.BSCSCAN_API_KEY else 'НЕТ'}")
     chat_id_display = config.TELEGRAM_CHAT_ID or "НЕ УСТАНОВЛЕН"
     print(f"\nChat ID: {chat_id_display}")
     

@@ -49,8 +49,10 @@ class BscTracker:
             
             if data.get("status") != "1":
                 # status "0" может означать просто отсутствие транзакций
-                if data.get("message") != "No transactions found":
-                    print(f"[BSC] API ответ: {data.get('message', 'Unknown error')}")
+                msg = data.get("message", "")
+                result = data.get("result", "")
+                if msg != "No transactions found":
+                    print(f"[BSC] API: {msg} - {result}")
                 return []
             
             return data.get("result", [])
