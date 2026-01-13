@@ -52,7 +52,7 @@ def print_banner():
     print(f"  BEP20: {config.BEP20_WALLET}")
     print(f"\nМинимальная сумма для уведомления: {config.MIN_AMOUNT} USDT")
     print(f"Интервал проверки: {config.CHECK_INTERVAL} сек")
-    chat_id_display = config.TELEGRAM_CHAT_ID if config.TELEGRAM_CHAT_ID != "CHANGE_ME" else "НЕ УСТАНОВЛЕН"
+    chat_id_display = config.TELEGRAM_CHAT_ID or "НЕ УСТАНОВЛЕН"
     print(f"\nChat ID: {chat_id_display}")
     
     print("\n" + "=" * 60)
@@ -60,10 +60,19 @@ def print_banner():
 
 def check_config():
     """Проверяет наличие критических настроек."""
-    if config.TELEGRAM_CHAT_ID == "CHANGE_ME":
-        print("\n⚠️  TELEGRAM_CHAT_ID не установлен!")
-        print("Замените 'CHANGE_ME' на ваш chat_id в config.py")
-        print("Или установите переменную окружения TELEGRAM_CHAT_ID")
+    missing = []
+    if not config.TELEGRAM_BOT_TOKEN:
+        missing.append("TELEGRAM_BOT_TOKEN")
+    if not config.TELEGRAM_CHAT_ID:
+        missing.append("TELEGRAM_CHAT_ID")
+    if not config.TRC20_WALLET:
+        missing.append("TRC20_WALLET")
+    if not config.BEP20_WALLET:
+        missing.append("BEP20_WALLET")
+    
+    if missing:
+        print(f"\n❌ Не установлены переменные: {', '.join(missing)}")
+        print("Добавьте их в Railway Variables")
         sys.exit(1)
 
 
