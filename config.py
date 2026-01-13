@@ -2,7 +2,7 @@ import os
 
 # Telegram Bot Configuration
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN") or "8587252011:AAG6cSXmeHCerQyC3_9WsxK95QwKqjIsXVw"
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID") or "CHANGE_ME"  # Замени на свой chat_id
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID") or "-1003615827817"
 
 # Wallet Addresses
 TRC20_WALLET = os.getenv("TRC20_WALLET") or "TW4i7hytEBeRBKxKZfPAxZqEgqUqNGXdSh"
