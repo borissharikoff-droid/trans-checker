@@ -99,14 +99,21 @@ def run_monitor():
     print("\nИнициализация (первичная загрузка транзакций)...")
     
     # Загружаем текущие транзакции чтобы не спамить уведомлениями о старых
+    # Используем process_transactions для правильной фильтрации
     tron_txs = tron_tracker.get_trc20_transfers()
     for tx in tron_txs:
-        tron_tracker.processed_txs.add(tx.get("transaction_id"))
+        tx_id = tx.get("transaction_id")
+        if tx_id:
+            tron_tracker.processed_txs.add(tx_id)
     
     bsc_usdt_txs = bsc_tracker.get_token_transfers(bsc_tracker.usdt_contract)
     bsc_busdt_txs = bsc_tracker.get_token_transfers(bsc_tracker.busdt_contract)
+    # Обрабатываем через process_transactions, но не отправляем уведомления
+    # Это правильно помечает транзакции как обработанные с учетом всех фильтров
     for tx in bsc_usdt_txs + bsc_busdt_txs:
-        bsc_tracker.processed_txs.add(tx.get("hash"))
+        tx_hash = tx.get("hash")
+        if tx_hash:
+            bsc_tracker.processed_txs.add(tx_hash)
     
     # Сохраняем начальное состояние
     save_state(tron_tracker.get_processed(), bsc_tracker.get_processed())

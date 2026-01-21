@@ -31,7 +31,7 @@ class BscTracker:
             "contractaddress": contract_address,
             "address": self.wallet,
             "page": 1,
-            "offset": 50,
+            "offset": 100,  # Увеличиваем лимит для лучшего покрытия
             "sort": "desc"
         }
         
@@ -42,7 +42,7 @@ class BscTracker:
             response = requests.get(self.api_url, params=params, timeout=15)
             
             if response.status_code != 200:
-                print(f"[BSC] Ошибка API: {response.status_code}")
+                print(f"[BSC] ❌ Ошибка API: {response.status_code} - {response.text}")
                 return []
             
             data = response.json()
@@ -52,13 +52,18 @@ class BscTracker:
                 msg = data.get("message", "")
                 result = data.get("result", "")
                 if msg != "No transactions found":
-                    print(f"[BSC] API: {msg} - {result}")
+                    print(f"[BSC] ⚠️ API: {msg} - {result}")
                 return []
             
-            return data.get("result", [])
+            result = data.get("result", [])
+            if isinstance(result, list):
+                return result
+            return []
             
         except Exception as e:
-            print(f"[BSC] Ошибка запроса: {e}")
+            print(f"[BSC] ❌ Ошибка запроса: {e}")
+            import traceback
+            traceback.print_exc()
             return []
     
     def process_transactions(self, transactions: list, token_type: str) -> list:
@@ -76,35 +81,52 @@ class BscTracker:
         
         for tx in transactions:
             tx_hash = tx.get("hash")
+            if not tx_hash:
+                continue
             
             # Пропускаем уже обработанные
             if tx_hash in self.processed_txs:
+                # Логируем только для входящих транзакций, чтобы не спамить
+                to_address_check = tx.get("to", "").lower()
+                if to_address_check == self.wallet:
+                    value_check = tx.get("value", "0")
+                    decimals_check = int(tx.get("tokenDecimal", 18))
+                    amount_check = int(value_check) / (10 ** decimals_check)
+                    if amount_check >= self.min_amount:
+                        print(f"[BSC] ⚠️ Транзакция {tx_hash[:16]}... уже обработана (сумма: {amount_check:.6f})")
                 continue
             
             # Проверяем что это входящая транзакция (to = наш кошелек)
             to_address = tx.get("to", "").lower()
-            if to_address != self.wallet:
+            from_address = tx.get("from", "").lower()
+            
+            # Логируем для отладки
+            if to_address == self.wallet:
+                # Получаем сумму (USDT/BUSDT имеют 18 decimals на BSC)
+                value = tx.get("value", "0")
+                decimals = int(tx.get("tokenDecimal", 18))
+                amount = int(value) / (10 ** decimals)
+                
+                print(f"[BSC] Найдена входящая транзакция {token_type.upper()}: {tx_hash[:10]}... сумма: {amount:.6f}, мин: {self.min_amount}")
+                
+                # Фильтруем по минимальной сумме
+                if amount < self.min_amount:
+                    print(f"[BSC] Транзакция {tx_hash[:10]}... пропущена: сумма {amount:.6f} < {self.min_amount}")
+                    self.processed_txs.add(tx_hash)
+                    continue
+                
+                new_transactions.append({
+                    "tx_hash": tx_hash,
+                    "amount": amount,
+                    "token": token_type,
+                    "network": "bep20"
+                })
+                
                 self.processed_txs.add(tx_hash)
-                continue
-            
-            # Получаем сумму (USDT/BUSDT имеют 18 decimals на BSC)
-            value = tx.get("value", "0")
-            decimals = int(tx.get("tokenDecimal", 18))
-            amount = int(value) / (10 ** decimals)
-            
-            # Фильтруем по минимальной сумме
-            if amount < self.min_amount:
+            else:
+                # Это исходящая транзакция или транзакция на другой адрес
+                # Помечаем как обработанную, чтобы не проверять снова
                 self.processed_txs.add(tx_hash)
-                continue
-            
-            new_transactions.append({
-                "tx_hash": tx_hash,
-                "amount": amount,
-                "token": token_type,
-                "network": "bep20"
-            })
-            
-            self.processed_txs.add(tx_hash)
         
         return new_transactions
     
@@ -119,21 +141,27 @@ class BscTracker:
         
         # Проверяем USDT
         usdt_txs = self.get_token_transfers(self.usdt_contract)
+        print(f"[BSC] Получено USDT транзакций от API: {len(usdt_txs)}")
         new_usdt = self.process_transactions(usdt_txs, "usdt")
         
         for tx in new_usdt:
-            print(f"[BSC] Новая транзакция: +{tx['amount']:.2f} USDT (BEP20)")
-            send_notification(tx["amount"], "USDT BNB")
-            total_notifications += 1
+            print(f"[BSC] ✅ Новая транзакция: +{tx['amount']:.2f} USDT (BEP20) | Hash: {tx['tx_hash'][:16]}...")
+            if send_notification(tx["amount"], "USDT BNB"):
+                total_notifications += 1
+            else:
+                print(f"[BSC] ❌ Ошибка отправки уведомления для транзакции {tx['tx_hash'][:16]}...")
         
         # Проверяем BUSDT (BUSD)
         busdt_txs = self.get_token_transfers(self.busdt_contract)
+        print(f"[BSC] Получено BUSDT транзакций от API: {len(busdt_txs)}")
         new_busdt = self.process_transactions(busdt_txs, "busdt")
         
         for tx in new_busdt:
-            print(f"[BSC] Новая транзакция: +{tx['amount']:.2f} BUSDT (BEP20)")
-            send_notification(tx["amount"], "BUSD BNB")
-            total_notifications += 1
+            print(f"[BSC] ✅ Новая транзакция: +{tx['amount']:.2f} BUSDT (BEP20) | Hash: {tx['tx_hash'][:16]}...")
+            if send_notification(tx["amount"], "BUSD BNB"):
+                total_notifications += 1
+            else:
+                print(f"[BSC] ❌ Ошибка отправки уведомления для транзакции {tx['tx_hash'][:16]}...")
         
         return total_notifications
     

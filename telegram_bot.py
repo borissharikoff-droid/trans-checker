@@ -30,13 +30,18 @@ def send_notification(amount: float, token_type: str) -> bool:
     try:
         response = requests.post(url, json=payload, timeout=10)
         if response.status_code == 200:
-            print(f"Уведомление отправлено: {message}")
-            return True
+            result = response.json()
+            if result.get("ok"):
+                print(f"✅ Уведомление отправлено: {message}")
+                return True
+            else:
+                print(f"❌ Ошибка Telegram API: {result.get('description', 'Unknown error')}")
+                return False
         else:
-            print(f"Ошибка отправки: {response.text}")
+            print(f"❌ Ошибка HTTP {response.status_code}: {response.text}")
             return False
     except Exception as e:
-        print(f"Ошибка подключения к Telegram: {e}")
+        print(f"❌ Ошибка подключения к Telegram: {e}")
         return False
 
 
