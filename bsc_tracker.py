@@ -123,7 +123,7 @@ class BscTracker:
         
         for tx in new_usdt:
             print(f"[BSC] Новая транзакция: +{tx['amount']:.2f} USDT (BEP20)")
-            send_notification(tx["amount"], "usdt")
+            send_notification(tx["amount"], "USDT BNB")
             total_notifications += 1
         
         # Проверяем BUSDT (BUSD)
@@ -132,7 +132,7 @@ class BscTracker:
         
         for tx in new_busdt:
             print(f"[BSC] Новая транзакция: +{tx['amount']:.2f} BUSDT (BEP20)")
-            send_notification(tx["amount"], "busdt")
+            send_notification(tx["amount"], "BUSD BNB")
             total_notifications += 1
         
         return total_notifications

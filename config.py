@@ -3,7 +3,7 @@ import os
 # Telegram Bot Configuration
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
-TELEGRAM_TOPIC_ID = int(os.getenv("TELEGRAM_TOPIC_ID", "4"))
+TELEGRAM_TOPIC_ID = int(os.getenv("TELEGRAM_THREAD_ID", "4"))
 
 # Wallet Addresses
 TRC20_WALLET = os.getenv("TRC20_WALLET", "")

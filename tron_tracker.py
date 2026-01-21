@@ -98,7 +98,7 @@ class TronTracker:
         
         for tx in new_txs:
             print(f"[TRON] Новая транзакция: +{tx['amount']:.2f} USDT (TRC20)")
-            send_notification(tx["amount"], "usdt")
+            send_notification(tx["amount"], "USDT TRC20")
         
         return len(new_txs)
     
