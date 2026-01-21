@@ -23,7 +23,8 @@ def send_notification(amount: float, token_type: str) -> bool:
     url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {
         "chat_id": config.TELEGRAM_CHAT_ID,
-        "text": message
+        "text": message,
+        "message_thread_id": config.TELEGRAM_TOPIC_ID
     }
     
     try:
